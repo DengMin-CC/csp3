@@ -1,0 +1,24 @@
+# Data files (large, not for version control)
+*.sp3
+*.SP3
+*.CLK
+sp3_2023348
+sp3_2023349
+sp3_2023350
+
+# Windows executables and scripts with secrets
+*.exe
+*.bat
+start-claude-glm.cmd
+
+# Claude Code local settings
+.claude/
+
+# MATLAB temporary files
+*.asv
+*.m~
+*.mat
+
+# Output backups
+1/
+orb/
