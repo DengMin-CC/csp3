@@ -2,14 +2,11 @@
 *.sp3
 *.SP3
 *.CLK
-sp3_2023348
-sp3_2023349
-sp3_2023350
+*.gz
 
-# Windows executables and scripts with secrets
+# Windows executables
 *.exe
 *.bat
-start-claude-glm.cmd
 
 # Claude Code local settings
 .claude/
@@ -18,7 +15,3 @@ start-claude-glm.cmd
 *.asv
 *.m~
 *.mat
-
-# Output backups
-1/
-orb/

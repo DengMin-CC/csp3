@@ -30,12 +30,15 @@
 
 ### WUM GNSS 产品
 - FTP：`ftp://igs.gnsswhu.cn`
-- SP3 路径：`/pub/gps/products/{GPS周}/WUM0MGXFIN_YYYYDDD0000_01D_05M_ORB.SP3.gz`
-- CLK 路径：`/pub/gps/products/{GPS周}/WUM0MGXFIN_YYYYDDD0000_01D_30S_CLK.CLK.gz`
+- **FIN（最终产品）路径**：`/pub/gps/products/{GPS周}/WUM0MGXFIN_{DDD}0000_01D_05M_ORB.SP3.gz`
+- **RAP（快速产品）路径**：
+  - ORB：`/pub/whu/phasebias/{年}/orbit/WUM0MGXRAP_{DDD}0000_01D_05M_ORB.SP3.gz`
+  - CLK：`/pub/whu/phasebias/{年}/clock/WUM0MGXRAP_{DDD}0000_01D_30S_CLK.CLK.gz`
+- 注意：`/pub/gps/products/` 的 RAP ORB 有时会缺失，`/pub/whu/phasebias/` 更完整
 - GPS 周计算：`week = floor((MJD - 44244) / 7)`
 - SP3 采样间隔：5 分钟（轨道），坐标系 IGS20
 - CLK 采样间隔：30 秒（钟差），RINEX 3.0 格式，钟差单位为秒
-- 当前版本包含全部 GNSS 系统：GPS + GLONASS + Galileo + BDS + QZSS，共 120 颗
+- 当前版本包含全部 GNSS 系统：GPS + GLONASS + Galileo + BDS + QZSS，共约 117 颗
 
 ## 时间约定
 - 所有时间系统为 GPST
@@ -55,42 +58,31 @@ F:\LeoSingle\csp3\
 |   - lagrange_interp()     9 阶 Lagrange 轨道插值（标准 IGS 方法）
 |   - writeSP3()          写出标准 SP3 格式
 |
-+-- FusionORBCLK.m          [辅助] 将 WUM CLK 精确钟差写入联合 SP3（csp3.exe 旧输出的修补）
-+-- FUSION_GNSS_LEO.m       [辅助] 用已有联合 SP3 中的 LEO 钟差更新新 LEO SP3
-+-- csp3.exe               [已废弃] 丢失 9 颗卫星 + 钟差错误，已被 mergeSP3.m 替代
-+-- csp3.bat               [已废弃] 调用 csp3.exe 的批处理脚本
-+-- start-claude-glm.cmd       Claude Code 启动脚本（GLM 模型）
++-- run_batch.m             [批处理] DOY 166-169 批量生成联合 SP3
 |
-+-- whu22924_new.sp3         [输出] DOY 348 新版联合 SP3（270 颗, 2901 epochs, 30s, 含 LEO 仿真钟差）
-+-- whu22924.sp3            [旧输出] DOY 348 旧版联合 SP3（csp3.exe 产出, 261 颗, 钟差错误）
-+-- whu22925.sp3            [旧输出] DOY 349 旧版联合 SP3（csp3.exe 产出）
-+-- whu22926.sp3            [旧输出] DOY 350 旧版联合 SP3（csp3.exe 产出）
-+-- GLwhu22924.sp3          [旧输出] DOY 348 FusionORBCLK.m 修补后的联合 SP3
++-- === 基线 DOY 348（2023-12-14, GPS 周 2292, WUM FIN）===
++-- WUM0MGXFIN_20233480000_01D_05M_ORB.SP3   [WUM FIN 轨道] 5min, IGS20
++-- WUM0MGXFIN_20233480000_01D_30S_CLK.CLK   [WUM FIN 钟差] 30s
++-- sp3_2023348.sp3           [LEO SP3] 60s, 150 颗, 来自 oi 项目
++-- whu22924_new.sp3         [输出] 联合 SP3（GNSS+LEO, 30s, 含 LEO 仿真钟差）
 |
-+-- sp3_2023348.sp3           [LEO SP3] DOY 348 新格式（60s, 150 颗 LEO, 来自 oi 项目）
-+-- sp3_2023349              [LEO SP3] DOY 349 旧格式
-+-- sp3_2023350              [LEO SP3] DOY 350 旧格式
-|
-+-- WUM0MGXFIN_20233480000_01D_05M_ORB.SP3   [WUM 轨道] DOY 348
-+-- WUM0MGXFIN_20233480000_01D_30S_CLK.CLK   [WUM 钟差] DOY 348
-+-- WUM0MGXFIN_20233490000_01D_05M_ORB.SP3   [WUM 轨道] DOY 349
-+-- WUM0MGXFIN_20233490000_01D_30S_CLK.CLK   [WUM 钟差] DOY 349
-+-- WUM0MGXFIN_20233500000_01D_05M_ORB.SP3   [WUM 轨道] DOY 350
-+-- WUM0MGXFIN_20233500000_01D_30S_CLK.CLK   [WUM 钟差] DOY 350
-|
-+-- 1\                      [备份] 旧版联合 SP3（csp3.exe 产出, whu22924~22926）
-+-- orb\                    [归档] WUM 产品副本（DOY 349~350）
++-- === DOY 166-169（2025-06-15~18, GPS 周 2371, WUM RAP）===
++-- WUM0MGXRAP_2025166x_01D_05M_ORB.SP3     [WUM RAP 轨道] x4
++-- WUM0MGXRAP_2025166x_01D_30S_CLK.CLK     [WUM RAP 钟差] x4
++-- sp3_2025166.sp3 ~ sp3_2025169.sp3       [LEO SP3] 60s, 150 颗 x4
++-- whu23710_new.sp3 ~ whu23713_new.sp3     [输出] 待生成
 ```
 
 ### 文件命名规则
 | 文件模式 | 含义 | 示例 |
 |---------|------|------|
-| `whu{周}{DOY}.sp3` | csp3.exe 旧版联合 SP3（30s） | whu22924.sp3 |
-| `whu{周}{DOY}_new.sp3` | mergeSP3.m 新版联合 SP3（30s，含 LEO 仿真钟差） | whu22924_new.sp3 |
-| `GLwhu{周}{DOY}.sp3` | FusionORBCLK.m 修补后的联合 SP3 | GLwhu22924.sp3 |
-| `sp3_YYYYDDD.sp3` | 纯 LEO SP3（60s，来自 oi 项目） | sp3_2023348.sp3 |
-| `WUM0MGXFIN_{YYYYDDD}0000_01D_05M_ORB.SP3` | WUM 轨道产品（5min） | — |
-| `WUM0MGXFIN_{YYYYDDD}0000_01D_30S_CLK.CLK` | WUM 钟差产品（30s） | — |
+| `whu{周}{wd}_new.sp3` | mergeSP3.m 生成的联合 SP3（30s） | whu22924_new.sp3, whu23710_new.sp3 |
+| `sp3_YYYYDDD.sp3` | 纯 LEO SP3（60s，来自 oi 项目） | sp3_2025166.sp3 |
+| `WUM0MGXFIN_{DDD}0000_01D_05M_ORB.SP3` | WUM 最终轨道产品（5min） | — |
+| `WUM0MGXRAP_{DDD}0000_01D_05M_ORB.SP3` | WUM 快速轨道产品（5min） | — |
+| `WUM0MGX{FIN\|RAP}_{DDD}0000_01D_30S_CLK.CLK` | WUM 钟差产品（30s） | — |
+
+> 输出文件名 `whu{周}{wd}`：周 = GPS 周，wd = 周内序号（Sun=0, Mon=1, ... Sat=6）
 
 ---
 
@@ -171,13 +163,15 @@ mergeSP3("WUM0MGXFIN_20233480000_01D_05M_ORB.SP3", ...
 ## 当前配置状态
 
 ### 已处理的数据时段
-| DOY | 日期 | GPS 周 | LEO SP3 | WUM ORB | WUM CLK | 联合 SP3 | 融合 SP3 |
-|-----|------|--------|---------|---------|---------|----------|----------|
-| 348 | 2023-12-14 | 2292 | sp3_2023348 | WUM DOY348 | WUM DOY348 | whu22924 (旧) | whu22924_new (新) |
-| 349 | 2023-12-15 | 2292 | sp3_2023349 | WUM DOY349 | WUM DOY349 | whu22925 (旧) | 待处理 |
-| 350 | 2023-12-16 | 2292 | sp3_2023350 | WUM DOY350 | WUM DOY350 | whu22926 (旧) | 待处理 |
+| DOY | 日期 | GPS 周 | WUM 产品类型 | LEO SP3 | 联合 SP3 输出 | 状态 |
+|-----|------|--------|-------------|---------|--------------|------|
+| 348 | 2023-12-14 | 2292 | FIN | sp3_2023348.sp3 | whu22924_new.sp3 | ✅ 基线 |
+| 166 | 2025-06-15 | 2371 | RAP | sp3_2025166.sp3 | whu23710_new.sp3 | 待生成 |
+| 167 | 2025-06-16 | 2371 | RAP | sp3_2025167.sp3 | whu23711_new.sp3 | 待生成 |
+| 168 | 2025-06-17 | 2371 | RAP | sp3_2025168.sp3 | whu23712_new.sp3 | 待生成 |
+| 169 | 2025-06-18 | 2371 | RAP | sp3_2025169.sp3 | whu23713_new.sp3 | 待生成 |
 
-### whu22924_new.sp3 产品验证结果（DOY 348）
+### whu22924_new.sp3 产品验证结果（DOY 348 基线）
 | 指标 | 旧版 (csp3.exe) | 新版 (mergeSP3.m) |
 |------|-----------------|-------------------|
 | 总卫星数 | 261 | **270** |
@@ -192,14 +186,10 @@ mergeSP3("WUM0MGXFIN_20233480000_01D_05M_ORB.SP3", ...
 | GNSS 轨道插值 | 9 阶 Lagrange | **9 阶 Lagrange（一致）** |
 | 文件大小 | 47 MB | 51 MB |
 
-### 联合 SP3 卫星构成（以 whu22924_new.sp3 为例）
-- GPS：G01-G32（32 颗）
-- GLONASS：R01-R24（部分，约 22 颗）
-- Galileo：E02-E36（部分，约 22 颗）
-- BDS：C01-C46（部分，约 31 颗）
-- QZSS：J02-J04（3 颗）
-- LEO：201-350（150 颗）
-- 总计：270 颗（全部完整）
+### 联合 SP3 卫星构成
+- DOY 348（2023, FIN）：GNSS ~120 颗 + LEO 150 颗 = ~270 颗
+- DOY 166-169（2025, RAP）：GNSS ~117 颗 + LEO 150 颗 = ~267 颗
+  - GNSS 构成随日期略有变化，具体以 SP3 头部 PRN 列表为准
 
 ### 数据规格
 | 产品 | 采样间隔 | 坐标系 | 时间系统 |
@@ -254,6 +244,5 @@ mergeSP3("WUM0MGXFIN_20233480000_01D_05M_ORB.SP3", ...
 - 老版 MATLAB cell 数组 `horzcat` 要求行数相同 → 用 `vertcat` 拼接列向量
 
 ### 文件组织
-- WUM 产品同时存在于根目录和 `orb\` 子目录，存在冗余
-- `1\` 子目录存放的是旧版联合 SP3，建议清理
-- 旧格式 LEO 文件（`sp3_2023349`，无 .sp3 后缀）和新格式（`sp3_2023348.sp3`）共存
+- DOY 348 使用 WUM FIN 产品（基线），DOY 166-169 使用 WUM RAP 产品
+- WUM RAP 数据源：`/pub/whu/phasebias/{年}/orbit/` 和 `/pub/whu/phasebias/{年}/clock/`
