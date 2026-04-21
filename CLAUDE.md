@@ -70,7 +70,7 @@ F:\LeoSingle\csp3\
 +-- WUM0MGXRAP_2025166x_01D_05M_ORB.SP3     [WUM RAP 轨道] x4
 +-- WUM0MGXRAP_2025166x_01D_30S_CLK.CLK     [WUM RAP 钟差] x4
 +-- sp3_2025166.sp3 ~ sp3_2025169.sp3       [LEO SP3] 60s, 150 颗 x4
-+-- whu23710_new.sp3 ~ whu23713_new.sp3     [输出] 待生成
++-- whu23710_new.sp3 ~ whu23713_new.sp3     [输出] ✅ 已生成
 ```
 
 ### 文件命名规则
@@ -166,10 +166,10 @@ mergeSP3("WUM0MGXFIN_20233480000_01D_05M_ORB.SP3", ...
 | DOY | 日期 | GPS 周 | WUM 产品类型 | LEO SP3 | 联合 SP3 输出 | 状态 |
 |-----|------|--------|-------------|---------|--------------|------|
 | 348 | 2023-12-14 | 2292 | FIN | sp3_2023348.sp3 | whu22924_new.sp3 | ✅ 基线 |
-| 166 | 2025-06-15 | 2371 | RAP | sp3_2025166.sp3 | whu23710_new.sp3 | 待生成 |
-| 167 | 2025-06-16 | 2371 | RAP | sp3_2025167.sp3 | whu23711_new.sp3 | 待生成 |
-| 168 | 2025-06-17 | 2371 | RAP | sp3_2025168.sp3 | whu23712_new.sp3 | 待生成 |
-| 169 | 2025-06-18 | 2371 | RAP | sp3_2025169.sp3 | whu23713_new.sp3 | 待生成 |
+| 166 | 2025-06-15 | 2371 | RAP | sp3_2025166.sp3 | whu23710_new.sp3 | ✅ |
+| 167 | 2025-06-16 | 2371 | RAP | sp3_2025167.sp3 | whu23711_new.sp3 | ✅ |
+| 168 | 2025-06-17 | 2371 | RAP | sp3_2025168.sp3 | whu23712_new.sp3 | ✅ |
+| 169 | 2025-06-18 | 2371 | RAP | sp3_2025169.sp3 | whu23713_new.sp3 | ✅ |
 
 ### whu22924_new.sp3 产品验证结果（DOY 348 基线）
 | 指标 | 旧版 (csp3.exe) | 新版 (mergeSP3.m) |
@@ -246,3 +246,67 @@ mergeSP3("WUM0MGXFIN_20233480000_01D_05M_ORB.SP3", ...
 ### 文件组织
 - DOY 348 使用 WUM FIN 产品（基线），DOY 166-169 使用 WUM RAP 产品
 - WUM RAP 数据源：`/pub/whu/phasebias/{年}/orbit/` 和 `/pub/whu/phasebias/{年}/clock/`
+
+### WUM FTP 下载经验
+- FTP 直连不需要代理：`curl -s -O "ftp://igs.gnsswhu.cn/..."`
+- HTTPS/HTTP 通过代理（127.0.0.1:7890）经常 SSL 握手失败，不要用
+- `/pub/gps/products/{GPS周}/` 的 RAP ORB 有时会缺失（如 DOY 169），`/pub/whu/phasebias/{年}/orbit/` 更完整
+- 下载前先 `curl -s` 列目录 + grep 确认文件存在，避免 550 错误
+
+---
+
+## 会话记录
+
+### 2026-04-21 会话：Git 版本控制 + DOY 166-169 批量处理
+
+**本次完成的工作：**
+
+1. **Git 版本控制初始化**
+   - 配置用户：`LeoSingle / leosingle@local`
+   - 代理：`http://127.0.0.1:7890`，SSL 后端：`openssl`（解决 schannel 断连）
+   - 远程仓库：https://github.com/DengMin-CC/csp3
+   - `.gitignore` 排除：`*.sp3 *.SP3 *.CLK *.gz *.exe *.bat .claude/ *.asv *.m~ *.mat`
+
+2. **WUM 产品下载（DOY 166-169）**
+   - DOY 166-168：先从 `/pub/gps/products/2371/` 下载了 FIN 产品，后改用 RAP 保持一致性
+   - DOY 169：FIN 未发布，`/pub/gps/products/2371/` 的 RAP ORB 也缺失，最终在 `/pub/whu/phasebias/2025/orbit/` 找到
+   - 经验：`/pub/whu/phasebias/` 的 RAP 产品比 `/pub/gps/products/` 更完整，应优先查这里
+   - 来源路径：
+     - ORB：`ftp://igs.gnsswhu.cn/pub/whu/phasebias/2025/orbit/WUM0MGXRAP_{DDD}0000_01D_05M_ORB.SP3.gz`
+     - CLK：`ftp://igs.gnsswhu.cn/pub/whu/phasebias/2025/clock/WUM0MGXRAP_{DDD}0000_01D_30S_CLK.CLK.gz`
+
+3. **项目目录清理**
+   - 删除废弃文件：`csp3.exe`、`csp3.bat`、`FusionORBCLK.m`、`FUSION_GNSS_LEO.m`、`start-claude-glm.cmd`
+   - 删除旧版输出：`whu22924.sp3`、`GLwhu22924.sp3`、`whu22925.sp3`、`whu22926.sp3`
+   - 删除冗余数据：DOY 349/350 WUM 产品、旧格式 LEO SP3、`1/`、`orb/`
+   - 保留：DOY 348 基线（WUM FIN）、DOY 166-169 数据（WUM RAP）
+
+4. **DOY 166-169 批量生成**
+   - 新增 `run_batch.m`：自动处理 DOY 166-169 四天
+   - 输出文件命名：`whu{GPS周}{周内序号}_new.sp3`（Sun=0, Mon=1, ...）
+   - MATLAB 后台运行成功，全部四天生成完毕
+
+5. **新建 gnssdata 项目**
+   - 目录：`F:\LeoSingle\gnssdata`
+   - 仓库：https://github.com/DengMin-CC/gnssdata
+   - 用途：统一管理 GNSS 精密产品下载与归档
+   - CLAUDE.md 包含：数据源路径、下载方法、网络配置、文件命名规则、目录结构建议
+
+**DOY 166-169 处理结果：**
+
+| 文件 | DOY | 日期 | GNSS | LEO | Epochs | 大小 |
+|------|-----|------|------|-----|--------|------|
+| whu23710_new.sp3 | 166 | 2025-06-15 (Sun) | 111 | 150 | 2901 | 48 MB |
+| whu23711_new.sp3 | 167 | 2025-06-16 (Mon) | 111 | 150 | 2901 | 48 MB |
+| whu23712_new.sp3 | 168 | 2025-06-17 (Tue) | 111 | 150 | 2901 | 48 MB |
+| whu23713_new.sp3 | 169 | 2025-06-18 (Wed) | 111 | 150 | 2901 | 48 MB |
+
+**Git 提交记录：**
+```
+7cf173b init: GNSS+LEO 联合精密轨道钟差产品生成项目
+933cf5c refactor: 清理项目目录，准备 DOY 166-169 批处理
+```
+
+**相关仓库：**
+- csp3：https://github.com/DengMin-CC/csp3
+- gnssdata：https://github.com/DengMin-CC/gnssdata
